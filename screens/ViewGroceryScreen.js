@@ -6,7 +6,6 @@ import {
   Text,
   View,
   TouchableOpacity,
-  Button,
   TextInput,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -22,30 +21,91 @@ export default function ViewGroceryScreen() {
   const [expiry, setExpiry] = useState(item.expiry);
   const [image, setImage] = useState(item.imageUri);
 
-  const handleEdit = field => {
-    console.log(`Edit ${field} tapped`);
+  const [editing, setEditing] = useState('');
+  const [tempValue, setTempValue] = useState('');
+
+  const [fieldsWidth, setFieldsWidth] = useState(0);
+
+  const startEdit = (field, value) => {
+    setEditing(field);
+    setTempValue(value);
+  };
+
+  const saveEdit = () => {
+    if (editing === 'name') setName(tempValue);
+    if (editing === 'note') setNote(tempValue);
+    if (editing === 'cost') setCost(tempValue);
+    if (editing === 'expiry') setExpiry(tempValue);
+    setEditing('');
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.card}>
-        {/* Image & Name */}
-        <View style={styles.row}>
+        {/* Image + Info */}
+        <View style={[styles.row]}>
           <View>
-            <Image source={{ uri: image }} style={styles.itemImage} />
-            <Button title="Pick Image" />
-          </View>
-          <View style={styles.itemInfo}>
-            <View style={styles.editableRow}>
-              <Text style={styles.itemName}>{name}</Text>
-              <TouchableOpacity onPress={() => handleEdit('name')}>
-                <Icon name="edit" size={20} color="#888" />
+            <Image source={{ uri: image }} style={[styles.itemImage]} />
+            <View style={styles.imageActions}>
+              <TouchableOpacity style={styles.imageButton}>
+                <Icon name="image" size={18} color="#4caf50" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.imageButton, { backgroundColor: '#f44336' }]}
+              >
+                <Icon name="delete" size={18} color="#fff" />
               </TouchableOpacity>
             </View>
+          </View>
+
+          <View style={[styles.itemInfo]}>
+            {/* Name */}
             <View style={styles.editableRow}>
-              <Text style={styles.itemNote}>{note}</Text>
-              <TouchableOpacity onPress={() => handleEdit('note')}>
-                <Icon name="edit" size={20} color="#888" />
+              {editing === 'name' ? (
+                <TextInput
+                  style={[styles.input, { flex: 1 }]}
+                  value={tempValue}
+                  onChangeText={setTempValue}
+                  autoFocus
+                />
+              ) : (
+                <Text style={styles.itemName}>{name}</Text>
+              )}
+              <TouchableOpacity
+                onPress={() =>
+                  editing === 'name' ? saveEdit() : startEdit('name', name)
+                }
+              >
+                <Icon
+                  name={editing === 'name' ? 'check-circle' : 'edit'}
+                  size={20}
+                  color={editing === 'name' ? '#4caf50' : '#888'}
+                />
+              </TouchableOpacity>
+            </View>
+
+            {/* Note */}
+            <View style={styles.editableRow}>
+              {editing === 'note' ? (
+                <TextInput
+                  style={[styles.input, { flex: 1 }]}
+                  value={tempValue}
+                  onChangeText={setTempValue}
+                  autoFocus
+                />
+              ) : (
+                <Text style={styles.itemNote}>{note || 'No notes'}</Text>
+              )}
+              <TouchableOpacity
+                onPress={() =>
+                  editing === 'note' ? saveEdit() : startEdit('note', note)
+                }
+              >
+                <Icon
+                  name={editing === 'note' ? 'check-circle' : 'edit'}
+                  size={20}
+                  color={editing === 'note' ? '#4caf50' : '#888'}
+                />
               </TouchableOpacity>
             </View>
           </View>
@@ -57,9 +117,30 @@ export default function ViewGroceryScreen() {
         <View style={styles.detailRow}>
           <Text style={styles.label}>Cost</Text>
           <View style={styles.editableRow}>
-            <Text style={styles.value}>₹{item.cost}</Text>
-            <TouchableOpacity onPress={() => handleEdit('cost')}>
-              <Icon name="edit" size={20} color="#888" />
+            <Text>₹</Text>
+            {editing === 'cost' ? (
+              <TextInput
+                style={[styles.input, { minWidth: 100, textAlign: 'center' }]}
+                keyboardType="numeric"
+                value={tempValue}
+                onChangeText={setTempValue}
+                autoFocus
+              />
+            ) : (
+              <Text style={styles.value}>{cost}</Text>
+            )}
+            <TouchableOpacity
+              onPress={() =>
+                editing === 'cost'
+                  ? saveEdit()
+                  : startEdit('cost', cost.toString())
+              }
+            >
+              <Icon
+                name={editing === 'cost' ? 'check-circle' : 'edit'}
+                size={20}
+                color={editing === 'cost' ? '#4caf50' : '#888'}
+              />
             </TouchableOpacity>
           </View>
         </View>
@@ -98,9 +179,26 @@ export default function ViewGroceryScreen() {
         <View style={styles.detailRow}>
           <Text style={styles.label}>Expiry</Text>
           <View style={styles.editableRow}>
-            <Text style={styles.value}>{item.expiry}</Text>
-            <TouchableOpacity onPress={() => handleEdit('expiry')}>
-              <Icon name="edit" size={20} color="#888" />
+            {editing === 'expiry' ? (
+              <TextInput
+                style={[styles.input, { minWidth: 100, textAlign: 'center' }]}
+                value={tempValue}
+                onChangeText={setTempValue}
+                autoFocus
+              />
+            ) : (
+              <Text style={styles.value}>{expiry}</Text>
+            )}
+            <TouchableOpacity
+              onPress={() =>
+                editing === 'expiry' ? saveEdit() : startEdit('expiry', expiry)
+              }
+            >
+              <Icon
+                name={editing === 'expiry' ? 'check-circle' : 'calendar-month'}
+                size={20}
+                color={editing === 'expiry' ? '#4caf50' : '#888'}
+              />
             </TouchableOpacity>
           </View>
         </View>
@@ -117,38 +215,45 @@ const styles = StyleSheet.create({
     padding: 16,
     elevation: 4,
   },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
+  row: { flexDirection: 'row', alignItems: 'flex-start' },
   itemImage: {
     width: 100,
     height: 100,
     borderRadius: 12,
     backgroundColor: '#f9f9f9',
   },
-  itemInfo: {
-    flex: 1,
-    marginLeft: 20,
+  imageActions: {
+    flexDirection: 'row',
+    marginTop: 8,
+    gap: 8,
+    justifyContent: 'space-between',
   },
+  imageButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#e8f5e9',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  imageButtonText: {
+    marginLeft: 4,
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#4caf50',
+  },
+  itemInfo: { flex: 1, marginLeft: 20 },
   editableRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    marginBottom: 6,
   },
-  itemName: {
-    fontWeight: 'bold',
-    fontSize: 22,
-    color: '#333',
-  },
-  itemNote: {
-    fontSize: 14,
-    color: '#777',
-    marginTop: 4,
-  },
+  itemName: { fontWeight: 'bold', fontSize: 22, color: '#333' },
+  itemNote: { fontSize: 14, color: '#777' },
   divider: {
     height: 1,
-    backgroundColor: '#bdbdbdff',
+    backgroundColor: '#e0e0e0',
     marginVertical: 16,
   },
   detailRow: {
@@ -157,15 +262,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 8,
   },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#555',
-  },
-  value: {
-    fontSize: 16,
-    color: '#333',
-  },
+  label: { fontSize: 16, fontWeight: '600', color: '#555' },
+  value: { fontSize: 16, color: '#333' },
   qtyContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -182,7 +280,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginHorizontal: 10,
-    minWidth: 30,
+    minWidth: 40,
     textAlign: 'center',
+  },
+  input: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+    fontSize: 16,
+    paddingVertical: 2,
   },
 });
